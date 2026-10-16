@@ -1,22 +1,35 @@
-# CloudFetch — Cloudflare download-link website
+# CloudFetch Worker
 
-## Important limitation
-This Worker streams a public HTTPS URL through Cloudflare; it does not guarantee faster downloads. It does not cache large files, bypass source rate limits, or make a slow origin faster. Check current Cloudflare Workers limits and terms before using it for large/high-volume downloads.
+Bản mẫu website dán URL và chuyển tiếp tải tệp bằng Cloudflare Worker. Giao diện `public/index.html` và API `/download` chạy cùng một Worker.
 
-## Deploy the Worker
-1. Install Node.js, then open a terminal in this folder.
-2. Run `npx wrangler login`.
-3. Run `npx wrangler deploy`.
-4. Copy the deployed Worker URL, for example `https://cloudfetch-download.<your-subdomain>.workers.dev/`.
-5. In `index.html`, replace `https://YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev/` with that exact URL.
+## Đưa lên GitHub
 
-## Deploy the website
-1. Create a Cloudflare Pages project and choose **Direct Upload** (or connect a Git repository).
-2. Upload `index.html` as the static site. Keep `worker.js` and `wrangler.toml` in your Worker project folder for deploying the Worker.
-3. Open the Pages URL and test with a small public file from a source that allows downloading.
+1. Giải nén ZIP này.
+2. Tạo repository GitHub mới, ví dụ `cloudfetch-worker`.
+3. Đưa **các tệp bên trong** thư mục `cloudfetch-worker` lên thư mục gốc repo. Ở cấp gốc phải thấy `wrangler.jsonc`, `src/`, `public/`.
+4. Trong Cloudflare Dashboard, vào **Workers & Pages** và chọn tạo Worker từ repository GitHub/Connect to Git (tên mục có thể khác đôi chút theo giao diện tài khoản).
+5. Chọn repo vừa tạo và giữ cấu hình trong `wrangler.jsonc`. Dự án không cần bước build riêng; dùng Wrangler để deploy nếu dashboard yêu cầu lệnh deploy.
+6. Mở URL `*.workers.dev` được Cloudflare cấp để kiểm tra.
 
-## Before public use
-- Add authentication and per-user rate limits.
-- Restrict CORS to your own Pages domain.
-- Add stricter URL/IP/redirect validation and abuse monitoring.
-- Do not use for private links, bypassing access controls, or copyrighted files without permission.
+## Cách khác: deploy từ máy tính
+
+Cần Node.js. Mở terminal tại thư mục dự án rồi chạy:
+
+```bash
+npx wrangler login
+npx wrangler deploy
+```
+
+## Cách hoạt động
+
+- `/` được phục vụ từ `public/index.html`.
+- `/download?url=...` chuyển tiếp dữ liệu từ URL nguồn và trả về dạng tệp tải xuống.
+- Chuyển tiếp header Range cơ bản.
+- Giới hạn 200 MiB cho mỗi tệp và giới hạn số lần chuyển hướng.
+
+## Lưu ý
+
+- Đây là mẫu học tập, không đảm bảo tăng tốc. Worker chuyển tiếp dữ liệu; tốc độ tùy thuộc máy chủ nguồn, vị trí mạng và giới hạn nền tảng.
+- Link cần đăng nhập, cookie, token hoặc trang xem trước có thể không dùng được.
+- Mẫu chặn IP literal và một số hostname nội bộ, nhưng không nên coi đây là lớp bảo vệ hoàn chỉnh cho proxy công khai. Không chia sẻ công khai lâu dài nếu chưa bổ sung xác thực/giới hạn yêu cầu và giám sát.
+- Chỉ tải nội dung bạn được phép truy cập; không dùng để vượt quyền truy cập hoặc giới hạn của máy chủ nguồn.
